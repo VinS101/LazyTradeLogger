@@ -39,7 +39,7 @@ namespace LTL.UI.Console.Integration.Tests
         {
             // Initialize process here
             Process proc = new Process();
-            proc.StartInfo.FileName = "OTLConsoleDataCollector.exe";
+            proc.StartInfo.FileName = "LTLConsole.exe";
             // add arguments as whole string
             proc.StartInfo.Arguments = arguments;
 

@@ -29,7 +29,7 @@
    <ItemGroup>
     <ProjectReference Include="..\..\LTL.Business\LTL.Business.csproj" />
     <ProjectReference Include="..\..\LTL.Common\LTL.Common.csproj" />
-    <ProjectReference Include="..\Console\OTLConsoleDataCollector.csproj" />
+    <ProjectReference Include="..\Console\LTLConsole.csproj" />
   </ItemGroup>
 
 </Project>

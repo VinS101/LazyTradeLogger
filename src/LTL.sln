@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LTL.UI", "LTL.UI", "{541ECC5B-1143-4497-8AAE-4E65F85A97D7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OTLConsoleDataCollector", "LTL.UI\Console\OTLConsoleDataCollector.csproj", "{96AAD23E-CCFA-4390-8396-BF2FFADC1697}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LTLConsole", "LTL.UI\Console\LTLConsole.csproj", "{96AAD23E-CCFA-4390-8396-BF2FFADC1697}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LTL.Business.Unit.Tests", "LTL.Business.Unit.Tests\LTL.Business.Unit.Tests.csproj", "{E9F27462-5BFE-4EF7-88BD-CB7B707C1B5B}"
 EndProject
