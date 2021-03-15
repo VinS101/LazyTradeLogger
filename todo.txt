@@ -1,0 +1,4 @@
+TODO:
+- Code coverage
+- Source control
+- Minimum, viable product, then evolve.
