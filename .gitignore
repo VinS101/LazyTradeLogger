@@ -1,0 +1,7 @@
+LTL.UI/Console.Integration.Tests/secret.json
+LTL.UI/Console/client_secret.json
+.vscode
+**/.vscode
+**/bin/Debug
+**/bin/Release
+**/obj
