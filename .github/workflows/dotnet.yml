@@ -11,7 +11,7 @@ defaults:
     working-directory: src
 
 jobs:
-  build:
+  Build-Unit-Tests:
     runs-on: ubuntu-latest
 
     steps:
