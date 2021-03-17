@@ -8,7 +8,7 @@ on:
 
 defaults:
   run:
-    working-directory: .\src
+    working-directory: src
 
 jobs:
   build:
@@ -20,8 +20,6 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 5.0.x
-    - name: Log Directory
-      run: ls
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
