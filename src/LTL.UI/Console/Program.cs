@@ -1,26 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using CommandLine;
-using Newtonsoft.Json;
 using LTL.Business;
 using LTL.Common;
 using LTL.Plugins;
+using Newtonsoft.Json;
 using ILogger = NLog.ILogger;
-using System.ComponentModel.DataAnnotations;
-using Microsoft.Extensions.Hosting;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 
 namespace LTL.UI.Console
 {
-
     public class Program
     {
         private static ILogger logger = NLog.LogManager.GetCurrentClassLogger();
-        private static string SpreadSheetId = "1PNK_qz6XUwWfMd6cV5mbrd21L7bcNRB6PweLYJSCWqs";
-        private static string GoogleSheetsCredsFilePath;
+        private static GoogleSheetsSettings _googleSheetsSettings;
         private static readonly string ApplicationName = "Options Trades Logger";
-        private static readonly string TargetGoogleSheetsRange = "Automated-logs";
 
         /// <summary>
         /// Main entry point of the console application
@@ -34,72 +28,37 @@ namespace LTL.UI.Console
             logger.Info("Starting console application");
             logger.Debug("Arguments passed: {0}", Newtonsoft.Json.JsonConvert.SerializeObject(args));
 
-            var exitCode = (int)ProcessLoggingRequest(args);
-            
-            //await host.StopAsync(); // TODO: What is this for?
+            var parser = new CommandLineParserWrapper(logger, OrchestrateLoggingOperation, WriteToCustomer, WriteToCustomerInRed);
+            var exitCode = (int)parser.ParseUserInput(args);
+
             return exitCode;
         }
 
+        /// <summary>
+        /// Composes the dependencies of the application
+        /// </summary>
+        /// <param name="args">Parameters passed into the console</param>
         static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
             .ConfigureAppConfiguration((hostingContext, configuration) =>
-                {
-                    logger.Debug("Start up: Configuring the app...");
-                    configuration.Sources.Clear();
-
-                    IHostEnvironment env = hostingContext.HostingEnvironment;
-
-                    // TODO: Inject dependencies and configuration values. This is awesome!
-                    configuration
-                        .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                        .AddJsonFile($"appsettings.{env.EnvironmentName}.json", true, true);
-
-                    IConfigurationRoot configurationRoot = configuration.Build();
-
-                    GoogleSheetsCredsFilePath = configurationRoot.GetSection(nameof(GoogleSheetsCredsFilePath)).Value;
-
-                    logger.Debug("App configured successfully!");
-                    logger.Debug("GoogleSheetsCredsFilePath = {GoogleSheetsCredsFilePath}", GoogleSheetsCredsFilePath);
-                });
-
-        /// <summary>
-        /// Parses input, processes the trade and logs it into the destination target
-        /// </summary>
-        /// <param name="inputArguments">Parameters passed into the console</param>
-        /// <returns>Exit code for the console. 0 means success. 1 means validation error. 2 Means general error</returns>
-        private static ExitCode ProcessLoggingRequest(string[] inputArguments)
-        {
-            ExitCode exitCode = ExitCode.Success;
-            logger.Debug("Parsing user input...");
-            WriteToCustomer("Welcome to Options Trades Logger! Please enter your trade!");
-            try
             {
-                var parser = Parser.Default; //Subject to change. I should be able to replace parsers.
+                logger.Debug("Start up: Configuring the app...");
+                configuration.Sources.Clear();
 
-                parser.ParseArguments<RequiredFields>(inputArguments)
-                    .WithParsed(OrchestrateLoggingOperation)
-                    .WithNotParsed(NotParsed);
-            }
-            catch (ValidationException ValidationException)
-            {
-                logger.Error(ValidationException.ToString());
-                WriteToCustomerInRed($"Validation failure: {ValidationException.Message}");
-                exitCode = ExitCode.ValidationError;
-            }
-            catch (Exception exception)
-            {
-                WriteToCustomer("Oops, ran into an error.");
-                logger.Error(exception.ToString());
-                exitCode = ExitCode.GeneralError;
-            }
-            return exitCode;
-        }
+                IHostEnvironment env = hostingContext.HostingEnvironment;
 
-        private static void NotParsed(IEnumerable<Error> obj)
-        {
-            // TODO: Initiate a loop if the parsing is failed, so that we keep asking users for input? Or not? Need some research.
-            throw new ValidationException("Parsing failed. Please ensure you have provided all the required input parameters.");
-        }
+                // TODO: Inject dependencies and configuration values. This is awesome!
+                configuration
+                    .AddJsonFile("appsettings.json", optional : true, reloadOnChange : true)
+                    .AddJsonFile($"appsettings.{env.EnvironmentName}.json", true, true);
+
+                IConfigurationRoot configurationRoot = configuration.Build();
+
+                _googleSheetsSettings = configurationRoot.GetSection(nameof(GoogleSheetsSettings)).Get<GoogleSheetsSettings>();
+
+                logger.Debug("App configured successfully!");
+                logger.Debug("Google sheets settings: {settings}", JsonConvert.SerializeObject(_googleSheetsSettings));
+            });
 
         /// <summary>
         /// Root composition for the LTL.Console application. Responsible for instantiating dependencies and orchestration of the logging operation.
@@ -130,14 +89,14 @@ namespace LTL.UI.Console
             IDataDumper dataDumper = new GoogleSheetsDataDumper(
                 ApplicationName,
                 logger,
-                GoogleSheetsCredsFilePath,
-                SpreadSheetId);
+                _googleSheetsSettings.GoogleSheetsCredsFilePath,
+                _googleSheetsSettings.GoogleSpreadSheetId);
 
             // Step 2: Dump the information into the desired target.
             dataDumper.Dump(
                 calculatedTradeData,
                 new Dictionary<string, object>
-                { { "targetGoogleSheetsRange", TargetGoogleSheetsRange }
+                { { "targetGoogleSheetsRange", _googleSheetsSettings.TargetGoogleSheetsRange }
                 });
 
             WriteToCustomer("Logging operation completed!");
