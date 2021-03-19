@@ -29,6 +29,7 @@ namespace LTL.Business
             var calculatedTradeDto = new TradeDataDto
             {
                 Ticker = incomingFields.Ticker.ToUpper(),
+                Strategy = incomingFields.Strategy,
                 OpenDate = incomingFields.OpenDate ?? dateTimeProvider.Now,
                 ExpiryDate = incomingFields.ExpiryDate,
                 Quantity = incomingFields.Quantity == 0 ? 1 : incomingFields.Quantity,
@@ -49,15 +50,23 @@ namespace LTL.Business
             calculatedTradeDto.DTE = CalculateDateUntilExpiration(calculatedTradeDto);
             calculatedTradeDto.RiskRewardRatio = CalculateRiskRewardRatio(calculatedTradeDto);
             calculatedTradeDto.DaysInTrade = CalculateDaysInTrade(calculatedTradeDto);
+            //calculatedTradeDto.ProbablityOfProfit = CalculateDaysProbablityOfProfit(calculatedTradeDto);
 
             logger.Debug("Finished calculating fields!");
             return calculatedTradeDto;
         }
 
-        // private TradeStatus CalculateTradeStatus(TradeStatus tradeStatus)
-        // {
-        //     return tradeStatus ?? TradeStatus.OPEN;
-        // }
+
+        /// <summary>
+        /// Calculates the probablity of profit based on strategy.
+        /// </summary>
+        /// <param name="calculatedTradeDto"></param>
+        /// <returns>The probality of profit</returns>
+        private decimal CalculateDaysProbablityOfProfit(TradeDataDto calculatedTradeDto)
+        {
+            // TODO: Implement and unit test
+            throw new NotImplementedException("Need to calculate probablity of profit.");
+        }
 
         /// <summary>
         /// Calculate the risk/reward ratio.

@@ -18,6 +18,7 @@ namespace LTL.UI.Console.Integration.Tests
 
         [Theory]
         [InlineData("--ticker MSFT --strategy \"SHORT PUT\" --shortputstrike 230 --expiration 4/16/2022 --price 1.98 --underlying 231.60 --delta 0.3")]
+        [InlineData("--ticker MSFT --strategy \"SHORT CALL\" --shortcallstrike 250 --expiration 4/16/2022 --price 2.25 --underlying 231.60 --delta 0.4")]
         public void Main_WhenBasicInputIsProvided_ShouldReturnExitCode0(string commandLineArguments)
         {
             // ARRANGE
