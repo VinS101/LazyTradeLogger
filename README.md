@@ -1,4 +1,4 @@
-# Lazy Trade Logger
+# Lazy Logger
 
 Welcome to Lazy Trade Logger! This application allows you to easily keep track of your options trades and your P/L, even after adjusting your trades. This app is platform agnostic and is well suited towards options traders who use multiple trading platforms, but don't want to depend on their trading platform to track their trades.
 
