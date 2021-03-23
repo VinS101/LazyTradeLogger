@@ -124,11 +124,15 @@ namespace LTL.Business
                     case OptionsTradingStrategy.SP:
                         if (!fields.ShortPutStrike.HasValue)
                             throw new NotSupportedException("Strategy is short put but no short put strike is specified.");
-
                         maxRisk = (fields.ShortPutStrike.Value - fields.Price) * OptionsMultipliyer;
                         break;
-                    default:
+                    case OptionsTradingStrategy.SC:
+                        if(!fields.ShortCallStrike.HasValue)
+                            throw new NotSupportedException($"Strategy is {fields.Strategy.GetEnumName()}, but no short call strike is specified.");
+                        maxRisk = (fields.ShortCallStrike.Value - fields.Price) * OptionsMultipliyer;
                         break;
+                    default:
+                        throw new NotSupportedException($"Max risk cannot be determined for strategy: {fields.Strategy.GetEnumName()}");
                 }
 
             }

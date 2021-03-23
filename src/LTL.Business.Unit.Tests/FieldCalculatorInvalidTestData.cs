@@ -11,13 +11,14 @@ namespace LTL.Business.Unit.Tests
         public IEnumerator<object[]> GetEnumerator()
         {
 
-            yield return TestCases.Null;
+            yield return When.Null;
             //yield return TestCases.ShortPut.StrikePriceIsHigherThanUnderlying;
+            yield return When.ShortCallHasNoStrike.ShouldThrowNotSuppportedException;
         }
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        private static class TestCases
+        private static class When
         {
             private static Func<Action, Exception> throwsArgumentException = (a) => Assert.Throws<ArgumentException>(a);
             private static Func<Action, NotSupportedException> NotSuppertedException = (a) => Assert.Throws<NotSupportedException>(a);
@@ -38,9 +39,33 @@ namespace LTL.Business.Unit.Tests
                         Strategy = OptionsTradingStrategy.SP,
                         ShortPutStrike = 250,
                         CommentsAtOpen = "Naked put for MSFT!"
-                    }, 
+                    },
                     NotSuppertedException
                 };
+            }
+
+            public static class ShortCallHasNoStrike
+            {
+                public static object[] ShouldThrowNotSuppportedException
+                {
+                    get
+                    {
+                        return new object[]
+                        {
+                            new TradeDataDto
+                            {
+                                Ticker = "msft",
+                                ExpiryDate = FrozenExpiratyDate,
+                                Delta = new decimal(0.3),
+                                Price = new decimal(1.72),
+                                Underlying = new decimal(243),
+                                Strategy = OptionsTradingStrategy.SC,
+                                CommentsAtOpen = "Naked put for MSFT!"
+                            },
+                            NotSuppertedException
+                        };
+                    }
+                }
             }
         }
     }
