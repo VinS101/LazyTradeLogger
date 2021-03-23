@@ -1,8 +1,8 @@
-# Lazy Trade Logger
+# Lazy Logger
 
 Welcome to Lazy Trade Logger! This application allows you to easily keep track of your options trades and your P/L, even after adjusting your trades. This app is platform agnostic and is well suited towards options traders who use multiple trading platforms, but don't want to depend on their trading platform to track their trades.
 
-<b>example use case:<b>
+<b>Example use case:<b>
   Mike uses three different trading platforms: TD Ameritrade, E-trade, and Robinhood. He wants a tool to help him keep track of all his trades across all the trading platforms he is using, so that he can see an overview and analytics of his open trades, closed trades and P/L (Profit loss). This is where Lazy Trade Logger comes into play. Lazy Trade Logger allows Mike to seamlessly enter each trade as he enters, and keeps track of the trades and visualizes them.
 
 # Lazy Trade Logger Console
