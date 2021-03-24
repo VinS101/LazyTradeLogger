@@ -50,12 +50,13 @@ namespace LTL.Business
             calculatedTradeDto.DTE = CalculateDateUntilExpiration(calculatedTradeDto);
             calculatedTradeDto.RiskRewardRatio = CalculateRiskRewardRatio(calculatedTradeDto);
             calculatedTradeDto.DaysInTrade = CalculateDaysInTrade(calculatedTradeDto);
+            calculatedTradeDto.MaxProfit = CalculateMaxProfit(calculatedTradeDto);
+
             //calculatedTradeDto.ProbablityOfProfit = CalculateDaysProbablityOfProfit(calculatedTradeDto);
 
             logger.Debug("Finished calculating fields!");
             return calculatedTradeDto;
         }
-
 
         /// <summary>
         /// Calculates the probablity of profit based on strategy.
@@ -74,7 +75,7 @@ namespace LTL.Business
         /// <param name="fields">Trade dto</param>
         /// <returns>the risk reward ratio</returns>
         /// <remarks>It is usually recommended to have a 1 to 3 ratio for short positions</remarks>
-        private decimal CalculateRiskRewardRatio(TradeDataDto fields)
+        private decimal? CalculateRiskRewardRatio(TradeDataDto fields)
         {
             decimal ratio = 0;
             if (IsStrategyCredit(fields.Strategy))
@@ -85,8 +86,15 @@ namespace LTL.Business
             {
                 if (fields.Strategy == OptionsTradingStrategy.SS)
                     throw new NotImplementedException("Need to figure out unlimited loss ratios. Might need to make this fields nullable.");
-                
-                ratio = fields.TotalDebit / fields.MaxRisk; // TODO: What about unlimited risk???
+
+                if (!IsStrategyNakedLong(fields.Strategy))
+                {
+                    ratio = fields.TotalDebit / fields.MaxRisk; // TODO: What about unlimited risk???
+                }
+                else
+                {
+                    return null; // No risk to reward ratio for naked long options
+                }
             }
             return Decimal.Round(ratio, roundingDecimals);
         }
@@ -115,7 +123,7 @@ namespace LTL.Business
             if (!IsStrategyCredit(fields.Strategy))
             {
                 // Max risk is the total debit
-                maxRisk = fields.TotalCredit;
+                maxRisk = fields.TotalDebit;
             }
             else
             {
@@ -171,6 +179,16 @@ namespace LTL.Business
         }
 
         /// <summary>
+        /// Calculates the max profit for the trade
+        /// </summary>
+        /// <param name="calculatedTradeDto">The object that represents the trade</param>
+        /// <returns>The max profit. If there is unlimited loss, it returns null</returns>
+        private decimal? CalculateMaxProfit(TradeDataDto calculatedTradeDto)
+        {
+            throw new NotImplementedException("Max profit not implemented yet.");
+        }
+
+        /// <summary>
         /// Determines whether the strategy is a short or long strategy
         /// </summary>
         /// <param name="strategy"></param>
@@ -182,5 +200,34 @@ namespace LTL.Business
                 strategy == OptionsTradingStrategy.PCS ||
                 strategy == OptionsTradingStrategy.IC ||
                 strategy == OptionsTradingStrategy.SS;
+
+        /// <summary>
+        /// Determines wheter a strategy is naked or not.
+        /// </summary>
+        /// <param name="strategy"></param>
+        /// <returns><c>True if the strategy is naked. Otherwise, false.<c></returns>
+        private bool IsStrategyNakedLong(OptionsTradingStrategy strategy) =>
+            strategy == OptionsTradingStrategy.LC ||
+            strategy == OptionsTradingStrategy.LP ||
+            strategy == OptionsTradingStrategy.LS;
+
+        // {
+        //     var IsStrategyNaked = false;
+        //     switch (strategy)
+        //     {
+        //         case OptionsTradingStrategy.LC:
+        //             IsStrategyNaked = true;
+        //             break;
+        //         case OptionsTradingStrategy.LP:
+        //             IsStrategyNaked = true;
+        //             break;
+        //         case OptionsTradingStrategy.LS:
+        //             IsStrategyNaked = true;
+        //             break;
+        //         default:
+        //             break;
+        //     }
+        //     return IsStrategyNaked;
+        // }
     }
 }

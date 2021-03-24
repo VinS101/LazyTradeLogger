@@ -12,8 +12,9 @@ namespace LTL.Business.Unit.Tests
         {
 
             yield return When.Null;
-            //yield return TestCases.ShortPut.StrikePriceIsHigherThanUnderlying;
+            //yield return TestCases.ShortPut.StrikePriceIsHigherThanUnderlying; // TODO: Evaluate this later. Seems like uncesessary validation
             yield return When.ShortCallHasNoStrike.ShouldThrowNotSuppportedException;
+            yield return When.LongCallHasNoStrike.ShouldThrowNotSuppportedException;
         }
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
@@ -61,6 +62,30 @@ namespace LTL.Business.Unit.Tests
                                 Underlying = new decimal(243),
                                 Strategy = OptionsTradingStrategy.SC,
                                 CommentsAtOpen = "Naked put for MSFT!"
+                            },
+                            NotSuppertedException
+                        };
+                    }
+                }
+            }
+
+            public static class LongCallHasNoStrike
+            {
+                public static object[] ShouldThrowNotSuppportedException
+                {
+                    get
+                    {
+                        return new object[]
+                        {
+                            new TradeDataDto
+                            {
+                                Ticker = "msft",
+                                ExpiryDate = FrozenExpiratyDate,
+                                Delta = new decimal(0.3),
+                                Price = new decimal(1.72),
+                                Underlying = new decimal(243),
+                                Strategy = OptionsTradingStrategy.LC,
+                                CommentsAtOpen = "Naked call for MSFT!"
                             },
                             NotSuppertedException
                         };
