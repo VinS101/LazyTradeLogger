@@ -26,5 +26,6 @@ namespace LTL.Business
         public TradeStatus TradeStatus { get; set; }
         public string CommentsAtOpen { get; set; }
         public decimal ProbablityOfProfit {get;set;}
+        public decimal? MaxProfit { get; set; }
     }
 }

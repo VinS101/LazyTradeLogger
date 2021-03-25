@@ -51,7 +51,6 @@ namespace LTL.Business
             calculatedTradeDto.RiskRewardRatio = CalculateRiskRewardRatio(calculatedTradeDto);
             calculatedTradeDto.DaysInTrade = CalculateDaysInTrade(calculatedTradeDto);
             calculatedTradeDto.MaxProfit = CalculateMaxProfit(calculatedTradeDto);
-
             //calculatedTradeDto.ProbablityOfProfit = CalculateDaysProbablityOfProfit(calculatedTradeDto);
 
             logger.Debug("Finished calculating fields!");
@@ -185,7 +184,24 @@ namespace LTL.Business
         /// <returns>The max profit. If there is unlimited loss, it returns null</returns>
         private decimal? CalculateMaxProfit(TradeDataDto calculatedTradeDto)
         {
-            throw new NotImplementedException("Max profit not implemented yet.");
+            decimal? maxProfit = default(decimal?);
+            if (IsStrategyCredit(calculatedTradeDto.Strategy))
+            {
+                maxProfit = calculatedTradeDto.TotalCredit;
+            }
+            else
+            {
+                switch (calculatedTradeDto.Strategy)
+                {
+                    case OptionsTradingStrategy.CDS:
+                        break;
+                    case OptionsTradingStrategy.PDS:
+                        break;
+                    default:
+                        break;
+                }
+            }
+            return maxProfit;
         }
 
         /// <summary>

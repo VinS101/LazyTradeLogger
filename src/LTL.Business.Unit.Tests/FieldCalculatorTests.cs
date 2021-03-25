@@ -31,10 +31,14 @@ namespace LTL.Business.Unit.Tests
 
             // ASSERT
             // For debugging:
-            // var expectedObject = Newtonsoft.Json.JsonConvert.SerializeObject(expected);
-            // var computed = Newtonsoft.Json.JsonConvert.SerializeObject(tradeDataWithComputedFields);
-            // logger.WriteLine(expectedObject);
-            // logger.WriteLine(computed);
+            var expectedObject = Newtonsoft.Json.JsonConvert.SerializeObject(expected);
+            var computed = Newtonsoft.Json.JsonConvert.SerializeObject(tradeDataWithComputedFields);
+            logger.WriteLine("Expecting:");
+            logger.WriteLine(expectedObject);
+            
+            
+            logger.WriteLine("Actual:");
+            logger.WriteLine(computed);
 
             var expectedLikeness = new Likeness<TradeDataDto, TradeDataDto>(expected);
             

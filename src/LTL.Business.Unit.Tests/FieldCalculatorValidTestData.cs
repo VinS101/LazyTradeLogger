@@ -8,8 +8,8 @@ namespace LTL.Business.Unit.Tests
     {
         public IEnumerator<object[]> GetEnumerator()
         {
-            yield return When.StrategyIsLowerCaseShortPut.ShouldCalculateExpectedFields;
-            yield return When.StrategyIsLowerCaseShortPut.ShouldCalculateExpectedFields;
+            yield return When.TickerIsLowerCaseShortPut.ShouldCalculateExpectedFields;
+            yield return When.TickerIsLowerCaseShortPut.ShouldCalculateExpectedFields;
             yield return When.StrategyIsShortCall.ShouldCalculateExpectedFields;
             yield return When.StrategyIsLongCall.ShouldCalculateExpectedFields;
         }
@@ -52,13 +52,14 @@ namespace LTL.Business.Unit.Tests
                                 DTE = 7, // Expiration date - DateTime.Now
                                 RiskRewardRatio = new decimal(0.0079), // Max profit / max risk
                                 DaysInTrade = 0,
-                                TradeStatus = TradeStatus.OPEN
+                                TradeStatus = TradeStatus.OPEN,
+                                MaxProfit = new decimal(172.00),
                             },
                         };
                     }
                 }
             }
-            public static class StrategyIsLowerCaseShortPut
+            public static class TickerIsLowerCaseShortPut
             {
                 public static object[] ShouldCalculateExpectedFields
                 {
@@ -94,7 +95,8 @@ namespace LTL.Business.Unit.Tests
                                 DTE = 7, // Expiration date - DateTime.Now
                                 RiskRewardRatio = new decimal(0.0079), // Max profit / max risk
                                 DaysInTrade = 0,
-                                TradeStatus = TradeStatus.OPEN
+                                TradeStatus = TradeStatus.OPEN,
+                                MaxProfit = new decimal(172.00),
                             },
                         };
                     }
@@ -136,13 +138,13 @@ namespace LTL.Business.Unit.Tests
                                 DTE = 7, // Expiration date - DateTime.Now
                                 RiskRewardRatio = new decimal(0.0069), // Max profit / max risk
                                 DaysInTrade = 0,
-                                TradeStatus = TradeStatus.OPEN
+                                TradeStatus = TradeStatus.OPEN,
+                                MaxProfit = new decimal(172.00)
                             },
                         };
                     }
                 }
             }
-
             public static class StrategyIsLongCall
             {
                 public static object[] ShouldCalculateExpectedFields
@@ -171,15 +173,14 @@ namespace LTL.Business.Unit.Tests
                                 Delta = new decimal(0.3),
                                 Price = new decimal(1.72),
                                 Underlying = new decimal(243),
-                                Strategy = OptionsTradingStrategy.SC,
+                                Strategy = OptionsTradingStrategy.LC,
                                 ShortCallStrike = 250,
                                 CommentsAtOpen = "Naked call option for MSFT!",
-                                TotalCredit = new decimal(172.00),
-                                MaxRisk = new decimal(24828),
+                                MaxRisk = new decimal(172),
                                 DTE = 7, // Expiration date - DateTime.Now
-                                RiskRewardRatio = new decimal(0.0069), // Max profit / max risk
                                 DaysInTrade = 0,
-                                TradeStatus = TradeStatus.OPEN
+                                TradeStatus = TradeStatus.OPEN,
+                                TotalDebit = new decimal(172)
                             },
                         };
                     }

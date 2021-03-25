@@ -14,7 +14,7 @@ namespace LTL.Business.Unit.Tests
             yield return When.Null;
             //yield return TestCases.ShortPut.StrikePriceIsHigherThanUnderlying; // TODO: Evaluate this later. Seems like uncesessary validation
             yield return When.ShortCallHasNoStrike.ShouldThrowNotSuppportedException;
-            yield return When.LongCallHasNoStrike.ShouldThrowNotSuppportedException;
+            //yield return When.LongCallHasNoStrike.ShouldThrowNotSuppportedException;
         }
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
