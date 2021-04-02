@@ -51,7 +51,7 @@ namespace LTL.Business
             calculatedTradeDto.RiskRewardRatio = CalculateRiskRewardRatio(calculatedTradeDto);
             calculatedTradeDto.DaysInTrade = CalculateDaysInTrade(calculatedTradeDto);
             calculatedTradeDto.MaxProfit = CalculateMaxProfit(calculatedTradeDto);
-            //calculatedTradeDto.ProbablityOfProfit = CalculateDaysProbablityOfProfit(calculatedTradeDto);
+            //calculatedTradeDto.ProbablityOfProfit = CalculateProbablityOfProfit(calculatedTradeDto); // TODO: To be implemented soon
 
             logger.Debug("Finished calculating fields!");
             return calculatedTradeDto;
@@ -62,10 +62,35 @@ namespace LTL.Business
         /// </summary>
         /// <param name="calculatedTradeDto"></param>
         /// <returns>The probality of profit</returns>
-        private decimal CalculateDaysProbablityOfProfit(TradeDataDto calculatedTradeDto)
+        private decimal? CalculateProbablityOfProfit(TradeDataDto calculatedTradeDto)
         {
             // TODO: Implement and unit test
+            decimal probablityOfProfit = 0;
+            switch (calculatedTradeDto.Strategy)
+            {
+                case OptionsTradingStrategy.SP:
+                    probablityOfProfit = CalculateShortPutProbablityOfProfit(calculatedTradeDto);
+                    break;
+                default:
+                    throw new NotImplementedException("Need to calculate probablity of profit.");
+            }
             throw new NotImplementedException("Need to calculate probablity of profit.");
+        }
+
+        private decimal CalculateShortPutProbablityOfProfit(TradeDataDto calculatedTradeDto)
+        {
+            if (!calculatedTradeDto.ShortCallStrike.HasValue)
+                throw new InvalidOperationException("Short put is not specified");
+
+            // 1.Breakeven = Strike price - Premium collected
+            decimal breakeven = calculatedTradeDto.ShortPutStrike.Value - calculatedTradeDto.Price;
+            // 2. Calculate the probablity of ITM for the breakeven --> How do we do this exactly? Need the formula.
+            //      - Calculate the delta of the breakeven strike
+            //      -
+            // Source: https://www.optionmatters.ca/delta-assessing-probabilities-based-break-even-price/ 
+            //var probablityOfInTheMoney = ???;
+            // 3. Substract from 100
+            throw new NotImplementedException("Need to obtain the delta of the break-even of the short put from a finance API to proceed further and calculate the PoP for short puts.");
         }
 
         /// <summary>
@@ -134,7 +159,7 @@ namespace LTL.Business
                         maxRisk = (fields.ShortPutStrike.Value - fields.Price) * OptionsMultipliyer;
                         break;
                     case OptionsTradingStrategy.SC:
-                        if(!fields.ShortCallStrike.HasValue)
+                        if (!fields.ShortCallStrike.HasValue)
                             throw new NotSupportedException($"Strategy is {fields.Strategy.GetEnumName()}, but no short call strike is specified.");
                         maxRisk = (fields.ShortCallStrike.Value - fields.Price) * OptionsMultipliyer;
                         break;
@@ -211,11 +236,11 @@ namespace LTL.Business
         /// <returns><c>true</c> if the strategy is a short strategy. Otherwise false.</returns>
         /// TODO: Extract into a standalone class later?
         private bool IsStrategyCredit(OptionsTradingStrategy strategy) =>
-                strategy == OptionsTradingStrategy.SP ||
-                strategy == OptionsTradingStrategy.SC ||
-                strategy == OptionsTradingStrategy.PCS ||
-                strategy == OptionsTradingStrategy.IC ||
-                strategy == OptionsTradingStrategy.SS;
+            strategy == OptionsTradingStrategy.SP ||
+            strategy == OptionsTradingStrategy.SC ||
+            strategy == OptionsTradingStrategy.PCS ||
+            strategy == OptionsTradingStrategy.IC ||
+            strategy == OptionsTradingStrategy.SS;
 
         /// <summary>
         /// Determines wheter a strategy is naked or not.
