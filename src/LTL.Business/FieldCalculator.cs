@@ -51,7 +51,7 @@ namespace LTL.Business
             calculatedTradeDto.RiskRewardRatio = CalculateRiskRewardRatio(calculatedTradeDto);
             calculatedTradeDto.DaysInTrade = CalculateDaysInTrade(calculatedTradeDto);
             calculatedTradeDto.MaxProfit = CalculateMaxProfit(calculatedTradeDto);
-            //calculatedTradeDto.ProbablityOfProfit = CalculateProbablityOfProfit(calculatedTradeDto); // TODO: To be implemented soon
+            calculatedTradeDto.ProbablityOfProfit = CalculateProbablityOfProfit(calculatedTradeDto); // TODO: To be implemented soon
 
             logger.Debug("Finished calculating fields!");
             return calculatedTradeDto;
@@ -65,16 +65,29 @@ namespace LTL.Business
         private decimal? CalculateProbablityOfProfit(TradeDataDto calculatedTradeDto)
         {
             // TODO: Implement and unit test
-            decimal probablityOfProfit = 0;
+            decimal? probablityOfProfit = 0;
             switch (calculatedTradeDto.Strategy)
             {
                 case OptionsTradingStrategy.SP:
                     probablityOfProfit = CalculateShortPutProbablityOfProfit(calculatedTradeDto);
                     break;
+                case OptionsTradingStrategy.PCS:
+                    probablityOfProfit = CalculatePutCreditSpreadProbablityOfProfit(calculatedTradeDto);
+                    break;
                 default:
                     throw new NotImplementedException("Need to calculate probablity of profit.");
             }
             throw new NotImplementedException("Need to calculate probablity of profit.");
+        }
+
+        private decimal? CalculatePutCreditSpreadProbablityOfProfit(TradeDataDto calculatedTradeDto)
+        {
+            if (!calculatedTradeDto.ShortPutStrike.HasValue)
+                throw new InvalidOperationException("Short put strike is not specified");
+            if (!calculatedTradeDto.LongPutStrike.HasValue)
+                throw new InvalidOperationException("Long put strike is not specified");
+
+            return 100 - (calculatedTradeDto.Price / ((calculatedTradeDto.ShortPutStrike - calculatedTradeDto.LongPutStrike) * 100));
         }
 
         private decimal CalculateShortPutProbablityOfProfit(TradeDataDto calculatedTradeDto)
@@ -104,7 +117,8 @@ namespace LTL.Business
             decimal ratio = 0;
             if (IsStrategyCredit(fields.Strategy))
             {
-                ratio = fields.TotalCredit / fields.MaxRisk;
+                if (fields.MaxRisk.HasValue)
+                    ratio = fields.TotalCredit / fields.MaxRisk.Value;
             }
             else
             {
@@ -113,7 +127,8 @@ namespace LTL.Business
 
                 if (!IsStrategyNakedLong(fields.Strategy))
                 {
-                    ratio = fields.TotalDebit / fields.MaxRisk; // TODO: What about unlimited risk???
+                    if (fields.MaxRisk.HasValue)
+                        ratio = fields.TotalDebit / fields.MaxRisk.Value; // TODO: What about unlimited risk???
                 }
                 else
                 {
@@ -141,9 +156,9 @@ namespace LTL.Business
             return (fields.ExpiryDate - dateTimeProvider.Now).Days;
         }
 
-        private decimal CalculateMaxRisk(TradeDataDto fields)
+        private decimal? CalculateMaxRisk(TradeDataDto fields)
         {
-            decimal maxRisk = 0;
+            decimal? maxRisk = 0;
             if (!IsStrategyCredit(fields.Strategy))
             {
                 // Max risk is the total debit
@@ -162,6 +177,13 @@ namespace LTL.Business
                         if (!fields.ShortCallStrike.HasValue)
                             throw new NotSupportedException($"Strategy is {fields.Strategy.GetEnumName()}, but no short call strike is specified.");
                         maxRisk = (fields.ShortCallStrike.Value - fields.Price) * OptionsMultipliyer;
+                        break;
+                    case OptionsTradingStrategy.PCS:
+                        if (!fields.ShortPutStrike.HasValue)
+                            throw new NotSupportedException($"Strategy is {fields.Strategy.GetEnumName()}, but no short put strike is specified.");
+                        if (!fields.LongPutStrike.HasValue)
+                            throw new NotSupportedException($"Strategy is {fields.Strategy.GetEnumName()}, but no long put strike is specified.");
+                        maxRisk = (fields.ShortPutStrike - fields.LongPutStrike - fields.Price) * 100;
                         break;
                     default:
                         throw new NotSupportedException($"Max risk cannot be determined for strategy: {fields.Strategy.GetEnumName()}");
