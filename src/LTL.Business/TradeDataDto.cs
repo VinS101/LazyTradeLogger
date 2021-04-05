@@ -19,12 +19,13 @@ namespace LTL.Business
         public decimal? LongPutStrike { get; set; }
         public decimal TotalCredit { get; set; }
         public decimal TotalDebit { get; set; }
-        public decimal MaxRisk { get; set; }
+        public decimal? MaxRisk { get; set; }
         public int DTE { get; set; }
-        public decimal RiskRewardRatio { get; set; }
+        public decimal? RiskRewardRatio { get; set; }
         public int DaysInTrade { get; set; }
         public TradeStatus TradeStatus { get; set; }
         public string CommentsAtOpen { get; set; }
-        public decimal ProbablityOfProfit {get;set;}
+        public decimal? ProbablityOfProfit {get;set;}
+        public decimal? MaxProfit { get; set; }
     }
 }

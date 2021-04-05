@@ -50,22 +50,60 @@ namespace LTL.Business
             calculatedTradeDto.DTE = CalculateDateUntilExpiration(calculatedTradeDto);
             calculatedTradeDto.RiskRewardRatio = CalculateRiskRewardRatio(calculatedTradeDto);
             calculatedTradeDto.DaysInTrade = CalculateDaysInTrade(calculatedTradeDto);
-            //calculatedTradeDto.ProbablityOfProfit = CalculateDaysProbablityOfProfit(calculatedTradeDto);
+            calculatedTradeDto.MaxProfit = CalculateMaxProfit(calculatedTradeDto);
+            calculatedTradeDto.ProbablityOfProfit = CalculateProbablityOfProfit(calculatedTradeDto); // TODO: To be implemented soon
 
             logger.Debug("Finished calculating fields!");
             return calculatedTradeDto;
         }
-
 
         /// <summary>
         /// Calculates the probablity of profit based on strategy.
         /// </summary>
         /// <param name="calculatedTradeDto"></param>
         /// <returns>The probality of profit</returns>
-        private decimal CalculateDaysProbablityOfProfit(TradeDataDto calculatedTradeDto)
+        private decimal? CalculateProbablityOfProfit(TradeDataDto calculatedTradeDto)
         {
             // TODO: Implement and unit test
+            decimal? probablityOfProfit = 0;
+            switch (calculatedTradeDto.Strategy)
+            {
+                case OptionsTradingStrategy.SP:
+                    probablityOfProfit = CalculateShortPutProbablityOfProfit(calculatedTradeDto);
+                    break;
+                case OptionsTradingStrategy.PCS:
+                    probablityOfProfit = CalculatePutCreditSpreadProbablityOfProfit(calculatedTradeDto);
+                    break;
+                default:
+                    throw new NotImplementedException("Need to calculate probablity of profit.");
+            }
             throw new NotImplementedException("Need to calculate probablity of profit.");
+        }
+
+        private decimal? CalculatePutCreditSpreadProbablityOfProfit(TradeDataDto calculatedTradeDto)
+        {
+            if (!calculatedTradeDto.ShortPutStrike.HasValue)
+                throw new InvalidOperationException("Short put strike is not specified");
+            if (!calculatedTradeDto.LongPutStrike.HasValue)
+                throw new InvalidOperationException("Long put strike is not specified");
+
+            return 100 - (calculatedTradeDto.Price / ((calculatedTradeDto.ShortPutStrike - calculatedTradeDto.LongPutStrike) * 100));
+        }
+
+        private decimal CalculateShortPutProbablityOfProfit(TradeDataDto calculatedTradeDto)
+        {
+            if (!calculatedTradeDto.ShortCallStrike.HasValue)
+                throw new InvalidOperationException("Short put is not specified");
+
+            // 1.Breakeven = Strike price - Premium collected
+            decimal breakeven = calculatedTradeDto.ShortPutStrike.Value - calculatedTradeDto.Price;
+            // 2. Calculate the probablity of ITM for the breakeven --> How do we do this exactly? Need the formula.
+            //      - Calculate the delta of the breakeven strike
+            //      -
+            // Source: https://www.optionmatters.ca/delta-assessing-probabilities-based-break-even-price/ 
+            //var probablityOfInTheMoney = ???;
+            // 3. Substract from 100
+            throw new NotImplementedException("Need to obtain the delta of the break-even of the short put from a finance API to proceed further and calculate the PoP for short puts.");
         }
 
         /// <summary>
@@ -74,19 +112,28 @@ namespace LTL.Business
         /// <param name="fields">Trade dto</param>
         /// <returns>the risk reward ratio</returns>
         /// <remarks>It is usually recommended to have a 1 to 3 ratio for short positions</remarks>
-        private decimal CalculateRiskRewardRatio(TradeDataDto fields)
+        private decimal? CalculateRiskRewardRatio(TradeDataDto fields)
         {
             decimal ratio = 0;
             if (IsStrategyCredit(fields.Strategy))
             {
-                ratio = fields.TotalCredit / fields.MaxRisk;
+                if (fields.MaxRisk.HasValue)
+                    ratio = fields.TotalCredit / fields.MaxRisk.Value;
             }
             else
             {
                 if (fields.Strategy == OptionsTradingStrategy.SS)
                     throw new NotImplementedException("Need to figure out unlimited loss ratios. Might need to make this fields nullable.");
-                
-                ratio = fields.TotalDebit / fields.MaxRisk; // TODO: What about unlimited risk???
+
+                if (!IsStrategyNakedLong(fields.Strategy))
+                {
+                    if (fields.MaxRisk.HasValue)
+                        ratio = fields.TotalDebit / fields.MaxRisk.Value; // TODO: What about unlimited risk???
+                }
+                else
+                {
+                    return null; // No risk to reward ratio for naked long options
+                }
             }
             return Decimal.Round(ratio, roundingDecimals);
         }
@@ -109,13 +156,13 @@ namespace LTL.Business
             return (fields.ExpiryDate - dateTimeProvider.Now).Days;
         }
 
-        private decimal CalculateMaxRisk(TradeDataDto fields)
+        private decimal? CalculateMaxRisk(TradeDataDto fields)
         {
-            decimal maxRisk = 0;
+            decimal? maxRisk = 0;
             if (!IsStrategyCredit(fields.Strategy))
             {
                 // Max risk is the total debit
-                maxRisk = fields.TotalCredit;
+                maxRisk = fields.TotalDebit;
             }
             else
             {
@@ -127,9 +174,16 @@ namespace LTL.Business
                         maxRisk = (fields.ShortPutStrike.Value - fields.Price) * OptionsMultipliyer;
                         break;
                     case OptionsTradingStrategy.SC:
-                        if(!fields.ShortCallStrike.HasValue)
+                        if (!fields.ShortCallStrike.HasValue)
                             throw new NotSupportedException($"Strategy is {fields.Strategy.GetEnumName()}, but no short call strike is specified.");
                         maxRisk = (fields.ShortCallStrike.Value - fields.Price) * OptionsMultipliyer;
+                        break;
+                    case OptionsTradingStrategy.PCS:
+                        if (!fields.ShortPutStrike.HasValue)
+                            throw new NotSupportedException($"Strategy is {fields.Strategy.GetEnumName()}, but no short put strike is specified.");
+                        if (!fields.LongPutStrike.HasValue)
+                            throw new NotSupportedException($"Strategy is {fields.Strategy.GetEnumName()}, but no long put strike is specified.");
+                        maxRisk = (fields.ShortPutStrike - fields.LongPutStrike - fields.Price) * 100;
                         break;
                     default:
                         throw new NotSupportedException($"Max risk cannot be determined for strategy: {fields.Strategy.GetEnumName()}");
@@ -171,16 +225,72 @@ namespace LTL.Business
         }
 
         /// <summary>
+        /// Calculates the max profit for the trade
+        /// </summary>
+        /// <param name="calculatedTradeDto">The object that represents the trade</param>
+        /// <returns>The max profit. If there is unlimited loss, it returns null</returns>
+        private decimal? CalculateMaxProfit(TradeDataDto calculatedTradeDto)
+        {
+            decimal? maxProfit = default(decimal?);
+            if (IsStrategyCredit(calculatedTradeDto.Strategy))
+            {
+                maxProfit = calculatedTradeDto.TotalCredit;
+            }
+            else
+            {
+                switch (calculatedTradeDto.Strategy)
+                {
+                    case OptionsTradingStrategy.CDS:
+                        break;
+                    case OptionsTradingStrategy.PDS:
+                        break;
+                    default:
+                        break;
+                }
+            }
+            return maxProfit;
+        }
+
+        /// <summary>
         /// Determines whether the strategy is a short or long strategy
         /// </summary>
         /// <param name="strategy"></param>
         /// <returns><c>true</c> if the strategy is a short strategy. Otherwise false.</returns>
         /// TODO: Extract into a standalone class later?
         private bool IsStrategyCredit(OptionsTradingStrategy strategy) =>
-                strategy == OptionsTradingStrategy.SP ||
-                strategy == OptionsTradingStrategy.SC ||
-                strategy == OptionsTradingStrategy.PCS ||
-                strategy == OptionsTradingStrategy.IC ||
-                strategy == OptionsTradingStrategy.SS;
+            strategy == OptionsTradingStrategy.SP ||
+            strategy == OptionsTradingStrategy.SC ||
+            strategy == OptionsTradingStrategy.PCS ||
+            strategy == OptionsTradingStrategy.IC ||
+            strategy == OptionsTradingStrategy.SS;
+
+        /// <summary>
+        /// Determines wheter a strategy is naked or not.
+        /// </summary>
+        /// <param name="strategy"></param>
+        /// <returns><c>True if the strategy is naked. Otherwise, false.<c></returns>
+        private bool IsStrategyNakedLong(OptionsTradingStrategy strategy) =>
+            strategy == OptionsTradingStrategy.LC ||
+            strategy == OptionsTradingStrategy.LP ||
+            strategy == OptionsTradingStrategy.LS;
+
+        // {
+        //     var IsStrategyNaked = false;
+        //     switch (strategy)
+        //     {
+        //         case OptionsTradingStrategy.LC:
+        //             IsStrategyNaked = true;
+        //             break;
+        //         case OptionsTradingStrategy.LP:
+        //             IsStrategyNaked = true;
+        //             break;
+        //         case OptionsTradingStrategy.LS:
+        //             IsStrategyNaked = true;
+        //             break;
+        //         default:
+        //             break;
+        //     }
+        //     return IsStrategyNaked;
+        // }
     }
 }

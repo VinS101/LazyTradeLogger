@@ -104,7 +104,7 @@ namespace LTL.Plugins
                         fields.TotalDebit.ToString(),
                         fields.MaxRisk.ToString(),
                         fields.DTE.ToString(),
-                        fields.RiskRewardRatio.ToString(),
+                        fields.RiskRewardRatio.HasValue? fields.RiskRewardRatio.ToString() : "N/A",
                         fields.TradeStatus.GetEnumName(),
                         fields.DaysInTrade.ToString(),
                     }
